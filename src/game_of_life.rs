@@ -52,12 +52,17 @@ impl GameOfLife {
 
     /// Serializes a `width` by `height` viewport starting at the origin into a flat buffer of 0s and 1s.
     pub fn cells(&self, width: i32, height: i32) -> Vec<u8> {
+        self.cells_at(width, height, 0, 0)
+    }
+
+    /// Serializes a `width` by `height` viewport starting at `(origin_x, origin_y)`.
+    pub fn cells_at(&self, width: i32, height: i32, origin_x: i32, origin_y: i32) -> Vec<u8> {
         assert!(width >= 0 && height >= 0, "width and height must be non-negative");
         let mut cells = vec![0u8; (width * height) as usize];
         for y in 0..height {
             for x in 0..width {
                 let idx = (y * width + x) as usize;
-                cells[idx] = self.get(x, y) as u8;
+                cells[idx] = self.get(origin_x + x, origin_y + y) as u8;
             }
         }
         cells

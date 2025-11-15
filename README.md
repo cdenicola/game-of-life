@@ -26,4 +26,4 @@ The UI talks directly to the Rust core via WebAssembly, so the same rules and ti
 
 ## Deployment
 
-The `.github/workflows/pages.yml` workflow builds the WebAssembly bundle with `wasm-pack` and publishes the `web/` directory to GitHub Pages. The workflow runs on every push to `main` (so merges from new PRs immediately update the site) and also builds on pull requests to surface build failures before they land. To activate publishing, set **Settings → Pages → Source** to **GitHub Actions** in your repository and keep the `web` directory committed so the static assets can be served.
+The `.github/workflows/pages.yml` workflow builds the WebAssembly bundle with `wasm-pack` and publishes the `web/` directory to GitHub Pages. The workflow runs on every push to `main`
