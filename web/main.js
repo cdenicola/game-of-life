@@ -11,6 +11,7 @@ const toggleRunButton = document.getElementById("toggleRun");
 const stepButton = document.getElementById("step");
 const clearButton = document.getElementById("clear");
 const randomButton = document.getElementById("random");
+const undoButton = document.getElementById("undo");
 const tickSlider = document.getElementById("tickRate");
 const tickLabel = document.getElementById("tickRateLabel");
 const viewportInfo = document.getElementById("viewportInfo");
@@ -89,6 +90,13 @@ const updateThemeColors = () => {
   themeColors = readThemeColors();
 };
 
+const updateUndoState = () => {
+  if (!undoButton) {
+    return;
+  }
+  undoButton.disabled = !game || !game.can_undo();
+};
+
 const drawGrid = ({ width, height, pitch }) => {
   ctx.beginPath();
   ctx.strokeStyle = themeColors.grid;
@@ -129,6 +137,7 @@ const drawCells = ({ width, height, pitch }) => {
 
 const render = () => {
   if (!game) {
+    updateUndoState();
     return;
   }
 
@@ -137,6 +146,7 @@ const render = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawCells(dims);
   drawGrid(dims);
+  updateUndoState();
 };
 
 const start = () => {
@@ -199,6 +209,7 @@ let lastPan = { x: 0, y: 0 };
 let panRemainderX = 0;
 let panRemainderY = 0;
 let spacePressed = false;
+let dragSnapshotTaken = false;
 
 const getStoredTheme = () => {
   try {
@@ -312,6 +323,7 @@ const applyPanDelta = (dx, dy) => {
 const handlePointerDown = (event) => {
   event.preventDefault();
   isPointerDown = true;
+  dragSnapshotTaken = false;
   isPanning = shouldPan(event) || event.button !== 0;
   try {
     canvas.setPointerCapture(event.pointerId);
@@ -327,6 +339,9 @@ const handlePointerDown = (event) => {
   }
 
   const { worldX, worldY } = cellFromEvent(event);
+  if (!dragSnapshotTaken) {
+    dragSnapshotTaken = true;
+  }
   paintValue = game.toggle(worldX, worldY);
   render();
 };
@@ -347,6 +362,9 @@ const handlePointerMove = (event) => {
   }
 
   const { worldX, worldY } = cellFromEvent(event);
+  if (!dragSnapshotTaken) {
+    dragSnapshotTaken = true;
+  }
   paintValue ? game.set(worldX, worldY) : game.unset(worldX, worldY);
   render();
 };
@@ -363,6 +381,7 @@ const handlePointerUp = (event) => {
   isPanning = false;
   panRemainderX = 0;
   panRemainderY = 0;
+  dragSnapshotTaken = false;
 };
 
 const interactiveKeys = new Set(["INPUT", "TEXTAREA", "BUTTON", "SELECT"]);
@@ -467,6 +486,17 @@ const wireEvents = () => {
     configureCanvas();
     render();
   });
+
+  if (undoButton) {
+    undoButton.addEventListener("click", () => {
+      stop();
+      if (game && game.undo()) {
+        render();
+      } else {
+        updateUndoState();
+      }
+    });
+  }
 
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {

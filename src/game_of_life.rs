@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 use std::fmt;
 use std::ops::RangeInclusive;
 
@@ -6,10 +6,13 @@ use std::ops::RangeInclusive;
 use wasm_bindgen::prelude::*;
 
 /// Core Game of Life state machine backed by a sparse hash set.
+const HISTORY_LIMIT: usize = 255;
+
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct GameOfLife {
     state: HashSet<(i32, i32)>,
+    history: VecDeque<HashSet<(i32, i32)>>,
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
@@ -83,6 +86,7 @@ impl GameOfLife {
 
     /// Advances the simulation one generation in place.
     pub fn tick(&mut self) {
+        self.snapshot();
         // Start with the union of all neighbors of live cells to avoid scanning an infinite grid.
         let neighbors: HashSet<(i32, i32)> = self
             .state
@@ -109,6 +113,29 @@ impl GameOfLife {
                 }
             })
             .collect();
+    }
+
+    /// Captures the current board into the undo stack, trimming to the latest 255 entries.
+    fn snapshot(&mut self) {
+        if self.history.len() == HISTORY_LIMIT {
+            self.history.pop_front();
+        }
+        self.history.push_back(self.state.clone());
+    }
+
+    /// Returns whether there is a buffered state to revert to.
+    pub fn can_undo(&self) -> bool {
+        !self.history.is_empty()
+    }
+
+    /// Restores the most recent snapshot, returning `true` if one existed.
+    pub fn undo(&mut self) -> bool {
+        if let Some(previous) = self.history.pop_back() {
+            self.state = previous;
+            true
+        } else {
+            false
+        }
     }
 
 }

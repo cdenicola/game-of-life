@@ -21,9 +21,9 @@ A sparse HashSet implementation of Conway's Game of Life written in Rust. The pr
    ```
 
 3. Open `http://localhost:8080` in your browser. 
-    - Use the controls to start/pause the simulation, step once, randomize the grid, adjust the tick interval, or toggle individual cells by clicking on them.
-    - Scroll to zoom the viewport and hold space (or right-click drag) to pan across the infinite grid
-    - Light/Dark Mode toggle lets you switch palettes at any time.
+    - Use the controls to start/pause the simulation, step once, randomize the grid, adjust the tick interval, undo to saved states, or toggle individual cells by clicking on them.
+    - Scroll to zoom the viewport and hold space (or right-click drag) to pan across the infinite grid—the live origin/size readout under the canvas helps you stay oriented.
+    - Toggle Light/Dark Mode at any time to swap palettes for the canvas and UI chrome.
 
 The UI talks directly to the Rust core via WebAssembly, so the same rules and tick logic power both the CLI demo and the website.
 
