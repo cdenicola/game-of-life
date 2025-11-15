@@ -20,6 +20,10 @@ A sparse HashSet implementation of Conway's Game of Life written in Rust. The pr
    python3 -m http.server 8080
    ```
 
-3. Open `http://localhost:8080` in your browser. Use the controls to start/pause the simulation, step once, randomize the grid, adjust the tick interval, or toggle individual cells by clicking on them.
+3. Open `http://localhost:8080` in your browser. Use the controls to start/pause the simulation, step once, randomize the grid, adjust the tick interval, or toggle individual cells by clicking on them. Scroll to zoom the viewport and hold space (or right-click drag) to pan across the infinite grid backed by the hash set.
 
 The UI talks directly to the Rust core via WebAssembly, so the same rules and tick logic power both the CLI demo and the website.
+
+## Deployment
+
+The `.github/workflows/pages.yml` workflow builds the WebAssembly bundle with `wasm-pack` and publishes the `web/` directory to GitHub Pages. The workflow runs on every push to `main` (so merges from new PRs immediately update the site) and also builds on pull requests to surface build failures before they land. To activate publishing, set **Settings → Pages → Source** to **GitHub Actions** in your repository and keep the `web` directory committed so the static assets can be served.
