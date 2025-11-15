@@ -1,9 +1,6 @@
 import init, { GameOfLife } from "./pkg/gameoflife.js";
 
 const CELL_SPACING = 1;
-const GRID_COLOR = "#cbd5f5";
-const DEAD_COLOR = "#f8fafc";
-const ALIVE_COLOR = "#2563eb";
 const MIN_CELL_SIZE = 4;
 const MAX_CELL_SIZE = 48;
 const ZOOM_FACTOR = 1.2;
@@ -16,10 +13,19 @@ const clearButton = document.getElementById("clear");
 const randomButton = document.getElementById("random");
 const tickSlider = document.getElementById("tickRate");
 const tickLabel = document.getElementById("tickRateLabel");
+const viewportInfo = document.getElementById("viewportInfo");
+const themeToggle = document.getElementById("themeToggle");
+const THEME_STORAGE_KEY = "gol-theme";
 
 let game;
 let tickInterval = Number(tickSlider.value);
 let intervalId = null;
+let currentTheme = "light";
+let themeColors = {
+  grid: "#cbd5f5",
+  dead: "#f8fafc",
+  alive: "#2563eb",
+};
 
 const viewport = {
   originX: 0,
@@ -57,9 +63,35 @@ const setTickLabel = () => {
   tickLabel.textContent = `${tickInterval} ms`;
 };
 
+const setViewportLabel = ({ width, height }) => {
+  if (!viewportInfo) {
+    return;
+  }
+
+  viewportInfo.textContent = `Origin: (${viewport.originX}, ${viewport.originY}) • Size: ${width} × ${height}`;
+};
+
+const readThemeColors = () => {
+  const styles = getComputedStyle(document.documentElement);
+  const read = (name, fallback) => {
+    const value = styles.getPropertyValue(name).trim();
+    return value.length > 0 ? value : fallback;
+  };
+
+  return {
+    grid: read("--grid-color", themeColors.grid),
+    dead: read("--cell-dead", themeColors.dead),
+    alive: read("--cell-alive", themeColors.alive),
+  };
+};
+
+const updateThemeColors = () => {
+  themeColors = readThemeColors();
+};
+
 const drawGrid = ({ width, height, pitch }) => {
   ctx.beginPath();
-  ctx.strokeStyle = GRID_COLOR;
+  ctx.strokeStyle = themeColors.grid;
   ctx.lineWidth = 1;
 
   for (let i = 0; i <= width; i += 1) {
@@ -84,7 +116,7 @@ const drawCells = ({ width, height, pitch }) => {
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const idx = y * width + x;
-      ctx.fillStyle = cells[idx] === 1 ? ALIVE_COLOR : DEAD_COLOR;
+      ctx.fillStyle = cells[idx] === 1 ? themeColors.alive : themeColors.dead;
       ctx.fillRect(
         x * pitch + CELL_SPACING,
         y * pitch + CELL_SPACING,
@@ -101,6 +133,7 @@ const render = () => {
   }
 
   const dims = getBoardDimensions();
+  setViewportLabel(dims);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawCells(dims);
   drawGrid(dims);
@@ -166,6 +199,83 @@ let lastPan = { x: 0, y: 0 };
 let panRemainderX = 0;
 let panRemainderY = 0;
 let spacePressed = false;
+
+const getStoredTheme = () => {
+  try {
+    return localStorage.getItem(THEME_STORAGE_KEY);
+  } catch (_) {
+    return null;
+  }
+};
+
+const setStoredTheme = (value) => {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, value);
+  } catch (_) {
+    // Ignore storage failures (private browsing, etc.)
+  }
+};
+
+const prefersDarkQuery =
+  typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-color-scheme: dark)")
+    : null;
+
+const handlePrefersChange = (event) => {
+  if (getStoredTheme()) {
+    return;
+  }
+  applyTheme(event.matches ? "dark" : "light", { persist: false });
+};
+
+const bindPrefersListener = () => {
+  if (!prefersDarkQuery) {
+    return;
+  }
+
+  if (typeof prefersDarkQuery.addEventListener === "function") {
+    prefersDarkQuery.addEventListener("change", handlePrefersChange);
+  } else if (typeof prefersDarkQuery.addListener === "function") {
+    prefersDarkQuery.addListener(handlePrefersChange);
+  }
+};
+
+const setThemeButtonLabel = (theme) => {
+  if (!themeToggle) {
+    return;
+  }
+
+  const isDark = theme === "dark";
+  themeToggle.textContent = isDark ? "Light Mode" : "Dark Mode";
+  themeToggle.setAttribute("aria-pressed", String(isDark));
+};
+
+const applyTheme = (nextTheme, { persist = true } = {}) => {
+  currentTheme = nextTheme;
+  document.documentElement.dataset.theme = nextTheme;
+  setThemeButtonLabel(nextTheme);
+  if (persist) {
+    setStoredTheme(nextTheme);
+  }
+  updateThemeColors();
+  render();
+};
+
+const detectPreferredTheme = () => {
+  const stored = getStoredTheme();
+  if (stored === "light" || stored === "dark") {
+    return stored;
+  }
+  if (prefersDarkQuery && typeof prefersDarkQuery.matches === "boolean") {
+    return prefersDarkQuery.matches ? "dark" : "light";
+  }
+  return "light";
+};
+
+const initTheme = () => {
+  applyTheme(detectPreferredTheme(), { persist: false });
+  bindPrefersListener();
+};
 
 const shouldPan = (event) => {
   if (event.pointerType === "touch") {
@@ -357,6 +467,13 @@ const wireEvents = () => {
     configureCanvas();
     render();
   });
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+    });
+  }
 };
 
 const boot = async () => {
@@ -365,6 +482,7 @@ const boot = async () => {
   configureCanvas();
   initializeViewport();
   setTickLabel();
+  initTheme();
   render();
   wireEvents();
 };

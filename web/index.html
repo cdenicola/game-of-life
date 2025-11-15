@@ -11,7 +11,6 @@
       <header>
         <h1>Conway's Game of Life</h1>
         <p>
-          Core rules run inside a Rust module and are compiled to WebAssembly.
           Use the controls below to experiment with the simulation.
         </p>
       </header>
@@ -37,10 +36,18 @@
             value="200"
           />
         </div>
+        <div class="control-group">
+          <button id="themeToggle" type="button" class="ghost-button" aria-pressed="false">
+            Dark Mode
+          </button>
+        </div>
       </section>
 
       <section class="board">
         <canvas id="board" width="600" height="600" aria-label="Game board"></canvas>
+        <div class="board-meta">
+          <span id="viewportInfo">Origin: (0, 0) • Size: 0 × 0</span>
+        </div>
         <p class="board-hint">
           Scroll to zoom. Hold space or right-click drag to pan the infinite grid.
         </p>
