@@ -4,10 +4,9 @@ use gameoflife::{GameOfLife, Viewport};
 
 fn main() {
     let mut game = GameOfLife::new();
-    game
-        .set(1, 1)
-        .set(2, 1)
-        .set(3, 1);
+    game.set(1, 1);
+    game.set(2, 1);
+    game.set(3, 1);
 
     let viewport = Viewport::new(0..=5, 0..=5);
     println!("{}", viewport.render(&game));

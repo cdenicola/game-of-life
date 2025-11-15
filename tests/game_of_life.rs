@@ -19,15 +19,15 @@ fn assert_period(mut game: GameOfLife, period: usize, name: &str) {
     let baseline = game.clone();
     for step in 1..period {
         game.tick();
-        assert!(
-            !baseline.same_state(&game),
+        assert_ne!(
+            baseline, game,
             "{name} unexpectedly returned to its baseline after {step} tick(s)"
         );
     }
 
     game.tick();
-    assert!(
-        baseline.same_state(&game),
+    assert_eq!(
+        baseline, game,
         "{name} did not return to its baseline after {period} tick(s)"
     );
 }
@@ -92,9 +92,11 @@ fn pentadecathlon() -> GameOfLife {
  * TESTS
  */
 #[test]
-fn set_supports_chaining() {
+fn set_marks_cells_alive() {
     let mut game = GameOfLife::new();
-    game.set(0, 0).set(1, 0).set(2, 0);
+    game.set(0, 0);
+    game.set(1, 0);
+    game.set(2, 0);
 
     assert!(game.get(0, 0));
     assert!(game.get(1, 0));
@@ -105,7 +107,9 @@ fn set_supports_chaining() {
 #[test]
 fn unset_clears_cells() {
     let mut game = GameOfLife::new();
-    game.set(0, 0).set(0, 1).unset(0, 1);
+    game.set(0, 0);
+    game.set(0, 1);
+    game.unset(0, 1);
 
     assert!(game.get(0, 0));
     assert!(!game.get(0, 1));
@@ -114,7 +118,9 @@ fn unset_clears_cells() {
 #[test]
 fn clear_resets_board() {
     let mut game = GameOfLife::new();
-    game.set(0, 0).set(1, 1).clear();
+    game.set(0, 0);
+    game.set(1, 1);
+    game.clear();
 
     for x in -1..=1 {
         for y in -1..=1 {
@@ -124,15 +130,13 @@ fn clear_resets_board() {
 }
 
 #[test]
-fn same_state_matches_structural_equality() {
+fn equality_matches_structural_state() {
     let a = blinker();
     let mut b = blinker();
 
-    assert!(a.same_state(&b));
     assert_eq!(a, b);
 
     b.tick();
-    assert!(!a.same_state(&b));
     assert_ne!(a, b);
 }
 
@@ -141,11 +145,9 @@ fn still_lifes() {
     for state in [square(), tub()] {
         let a = state.clone();
         let mut b = state.clone();
-        assert!(a.same_state(&b));
         assert_eq!(a, b);
         for _ in 0..=4 {
             b.tick();
-            assert!(a.same_state(&b));
             assert_eq!(a, b);
         }
     }

@@ -2,12 +2,17 @@ use std::collections::HashSet;
 use std::fmt;
 use std::ops::RangeInclusive;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
 /// Core Game of Life state machine backed by a sparse hash set.
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct GameOfLife {
     state: HashSet<(i32, i32)>,
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 impl GameOfLife {
     /// Creates a new, empty game board.
     pub fn new() -> Self {
@@ -19,22 +24,43 @@ impl GameOfLife {
         self.state.contains(&(x, y))
     }
 
-    /// Marks the cell at `(x, y)` as alive and returns `self` for chaining.
-    pub fn set(&mut self, x: i32, y: i32) -> &mut Self {
+    /// Marks the cell at `(x, y)` as alive.
+    pub fn set(&mut self, x: i32, y: i32) {
         self.state.insert((x, y));
-        self
     }
 
-    /// Marks the cell at `(x, y)` as dead and returns `self` for chaining.
-    pub fn unset(&mut self, x: i32, y: i32) -> &mut Self {
+    /// Marks the cell at `(x, y)` as dead.
+    pub fn unset(&mut self, x: i32, y: i32) {
         self.state.remove(&(x, y));
-        self
     }
 
-    /// Removes all live cells from the board and returns `self` for chaining.
-    pub fn clear(&mut self) -> &mut Self {
+    /// Removes all live cells from the board.
+    pub fn clear(&mut self) {
         self.state.clear();
-        self
+    }
+
+    /// Toggles the cell at `(x, y)` and returns the new state.
+    pub fn toggle(&mut self, x: i32, y: i32) -> bool {
+        if self.get(x, y) {
+            self.unset(x, y);
+            false
+        } else {
+            self.set(x, y);
+            true
+        }
+    }
+
+    /// Serializes a `width` by `height` viewport starting at the origin into a flat buffer of 0s and 1s.
+    pub fn cells(&self, width: i32, height: i32) -> Vec<u8> {
+        assert!(width >= 0 && height >= 0, "width and height must be non-negative");
+        let mut cells = vec![0u8; (width * height) as usize];
+        for y in 0..height {
+            for x in 0..width {
+                let idx = (y * width + x) as usize;
+                cells[idx] = self.get(x, y) as u8;
+            }
+        }
+        cells
     }
 
     fn get_neighbors(x: i32, y: i32) -> Vec<(i32, i32)> {
@@ -78,11 +104,6 @@ impl GameOfLife {
                 }
             })
             .collect();
-    }
-
-    /// Returns `true` when `other` has exactly the same live cells as `self`.
-    pub fn same_state(&self, other: &Self) -> bool {
-        self == other
     }
 
 }

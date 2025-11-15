@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Game of Life</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <h1>Conway's Game of Life</h1>
+        <p>
+          Core rules run inside a Rust module and are compiled to WebAssembly.
+          Use the controls below to experiment with the simulation.
+        </p>
+      </header>
+
+      <section class="controls">
+        <div class="control-group">
+          <button id="toggleRun" type="button">Start</button>
+          <button id="step" type="button">Step Once</button>
+          <button id="clear" type="button">Clear</button>
+          <button id="random" type="button">Randomize</button>
+        </div>
+        <div class="control-group">
+          <label for="tickRate">
+            Tick interval:
+            <span id="tickRateLabel">200ms</span>
+          </label>
+          <input
+            id="tickRate"
+            type="range"
+            min="50"
+            max="1000"
+            step="50"
+            value="200"
+          />
+        </div>
+      </section>
+
+      <section class="board">
+        <canvas id="board" width="600" height="600" aria-label="Game board"></canvas>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
